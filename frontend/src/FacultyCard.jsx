@@ -1,139 +1,151 @@
-const FacultyCard = ({ faculty, onClick }) => {
-  // Logic to clean the name for the initial-based avatar API
-  const nameForAvatar = faculty.name.replace(/(Dr\.|Mr\.|Ms\.|Mrs\.)\s*/g, '').trim();
+import React from 'react';
 
-  // Dynamic waterfall: try SASTRA upload first, then fallback to initials
-  const handleImageError = (e) => {
-    e.target.onerror = null; 
-    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=0056b3&color=fff&size=150&bold=true`;
-  };
+const FacultyCard = ({ faculty, onClick }) => {
+  // Ensure we have a valid rating, otherwise default to 0
+  const rating = faculty.overallRating ? Number(faculty.overallRating).toFixed(1) : "0.0";
+  const hasRating = rating !== "0.0";
 
   return (
-    <div 
-      onClick={onClick} 
-      style={styles.card} 
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
-        e.currentTarget.style.transform = 'translateY(-6px)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-        e.currentTarget.style.transform = 'translateY(0)';
-      }}
-    >
-      {/* Profile Image Section */}
+    <div style={styles.card} onClick={onClick}>
       <div style={styles.imageContainer}>
         <img 
           src={faculty.imageUrl} 
           alt={faculty.name} 
-          onError={handleImageError}
           style={styles.image}
+          onError={(e) => { 
+            e.target.src = 'https://via.placeholder.com/150/0056b3/FFFFFF?text=' + faculty.name.charAt(0); 
+          }}
         />
       </div>
       
-      {/* Standardized Sastra-Blue Header */}
-      <div style={styles.nameHeader}>{faculty.name}</div>
-      
-      {/* Content Section with Improved Spacing */}
-      <div style={styles.contentArea}>
-        <div style={styles.textContainer}>
-          <p style={styles.designation}>{faculty.designation}</p>
-          <p style={styles.email}>{faculty.email || 'No email provided'}</p>
-        </div>
-        
-        <div style={styles.ratingWrapper}>
-          <span style={styles.ratingBadge}>
-            ⭐ {faculty.overallRating > 0 ? faculty.overallRating.toFixed(1) : 'No Ratings'}
-          </span>
+      <div style={styles.header}>
+        <h3 style={styles.name}>{faculty.name}</h3>
+      </div>
+
+      <div style={styles.body}>
+        {/* Dynamic Designation & Department */}
+        <p style={styles.designation}>
+          {faculty.designation} <span style={styles.dot}>•</span> {faculty.department}
+        </p>
+
+        {/* Educational Qualifications Snippet (if available) */}
+        {faculty.qualifications && (
+          <p style={styles.qualifications} title={faculty.qualifications}>
+            🎓 {faculty.qualifications.length > 35 ? faculty.qualifications.substring(0, 35) + '...' : faculty.qualifications}
+          </p>
+        )}
+
+        {/* Email Display */}
+        {faculty.email ? (
+          <a 
+            href={`mailto:${faculty.email}`} 
+            style={styles.emailLink} 
+            onClick={(e) => e.stopPropagation()} // Prevents opening the modal when clicking email
+          >
+            ✉️ {faculty.email}
+          </a>
+        ) : (
+          <p style={styles.noEmail}>✉️ No email provided</p>
+        )}
+
+        {/* Rating Badge */}
+        <div style={styles.footer}>
+          <div style={{ ...styles.ratingBadge, backgroundColor: hasRating ? '#fef3c7' : '#f1f5f9', color: hasRating ? '#92400e' : '#64748b' }}>
+            {hasRating ? `⭐ ${rating}` : '⭐ No Ratings'}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Extracted style object for better readability and performance
 const styles = {
-  card: {
-    backgroundColor: '#ffffff',
-    border: '1px solid #e1e4e8',
-    borderRadius: '14px',
+  card: { 
+    backgroundColor: '#ffffff', 
+    borderRadius: '16px', 
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', 
+    border: '1px solid #e2e8f0',
     overflow: 'hidden',
+    cursor: 'pointer',
+    transition: 'transform 0.2s, box-shadow 0.2s',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    paddingTop: '28px',
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-    height: '100%',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+    height: '100%'
   },
-  imageContainer: {
-    width: '125px', 
-    height: '125px', 
+  imageContainer: { 
+    display: 'flex', 
+    justifyContent: 'center', 
+    padding: '25px 0 15px 0',
+    backgroundColor: '#f8fafc' 
+  },
+  image: { 
+    width: '100px', 
+    height: '100px', 
     borderRadius: '50%', 
-    overflow: 'hidden',
-    border: '4px solid #f1f3f5',
-    marginBottom: '22px',
-    backgroundColor: '#fff',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
+    objectFit: 'cover', 
+    border: '4px solid #ffffff',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
   },
-  image: {
-    width: '100%', 
-    height: '100%', 
-    objectFit: 'cover'
-  },
-  nameHeader: {
+  header: { 
     backgroundColor: '#0056b3', 
+    padding: '12px', 
+    textAlign: 'center' 
+  },
+  name: { 
+    margin: 0, 
     color: '#ffffff', 
-    width: '100%', 
-    textAlign: 'center', 
-    padding: '12px 10px',
+    fontSize: '1.05rem', 
     fontWeight: '700',
-    fontSize: '0.95rem',
-    letterSpacing: '0.3px',
+    letterSpacing: '0.5px',
     textTransform: 'uppercase'
   },
-  contentArea: { 
-    padding: '22px 18px', 
-    textAlign: 'center', 
-    width: '100%', 
-    flexGrow: 1, 
-    display: 'flex', 
-    flexDirection: 'column', 
-    justifyContent: 'space-between' 
-  },
-  textContainer: {
-    marginBottom: '15px'
+  body: { 
+    padding: '20px', 
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1
   },
   designation: { 
-    margin: '0 0 6px 0', 
-    color: '#24292e', 
-    fontSize: '0.9rem', 
-    fontWeight: '600',
-    lineHeight: '1.4'
+    margin: '0 0 10px 0', 
+    fontSize: '0.95rem', 
+    fontWeight: '700', 
+    color: '#0f172a' 
   },
-  email: { 
-    margin: '0', 
-    color: '#586069', 
-    fontSize: '0.8rem', 
-    wordBreak: 'break-all',
+  dot: {
+    color: '#cbd5e1',
+    margin: '0 4px'
+  },
+  qualifications: {
+    margin: '0 0 12px 0',
+    fontSize: '0.8rem',
+    color: '#64748b',
     fontStyle: 'italic'
   },
-  ratingWrapper: {
-    marginTop: '10px'
+  emailLink: {
+    margin: '0 0 15px 0',
+    fontSize: '0.85rem',
+    color: '#0056b3',
+    textDecoration: 'none',
+    fontWeight: '600'
+  },
+  noEmail: { 
+    margin: '0 0 15px 0', 
+    fontSize: '0.85rem', 
+    color: '#94a3b8',
+    fontStyle: 'italic'
+  },
+  footer: { 
+    marginTop: 'auto', 
+    display: 'flex', 
+    justifyContent: 'center' 
   },
   ratingBadge: { 
-    display: 'inline-block', 
-    backgroundColor: '#fff9db', 
-    color: '#856404', 
     padding: '6px 16px', 
-    borderRadius: '25px', 
-    fontSize: '0.8rem', 
-    fontWeight: '700', 
-    border: '1px solid #ffe066',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+    borderRadius: '20px', 
+    fontSize: '0.9rem', 
+    fontWeight: 'bold',
+    border: '1px solid #e2e8f0'
   }
 };
 
