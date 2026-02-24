@@ -11,9 +11,11 @@ const FacultyModal = ({ faculty, onClose }) => {
   // Helper mapping for satisfaction emojis
   const satisfactionEmojis = { 1: '😡', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' };
 
+  // Helper to check if a field actually has valid data
+  const hasValidData = (text) => text && text !== "Not provided" && text.trim() !== "";
+
   return (
     <div style={styles.overlay} onClick={onClose}>
-      {/* e.stopPropagation() prevents clicking inside the modal from closing it */}
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         
         {/* Header Section */}
@@ -36,8 +38,33 @@ const FacultyModal = ({ faculty, onClose }) => {
           <button onClick={onClose} style={styles.closeBtn}>×</button>
         </div>
 
-        {/* Scrollable Reviews Section */}
+        {/* Scrollable Content Section */}
         <div style={styles.contentScroll}>
+          
+          {/* NEW: Academic Profile Section (Mirrors the University Site) */}
+          {(hasValidData(faculty.qualifications) || hasValidData(faculty.areasOfInterest)) && (
+            <div style={styles.academicSection}>
+              <h3 style={styles.sectionTitle}>Academic Profile</h3>
+              <table style={styles.academicTable}>
+                <tbody>
+                  {hasValidData(faculty.qualifications) && (
+                    <tr>
+                      <th style={styles.tableHeader}>Qualifications</th>
+                      <td style={styles.tableData}>{faculty.qualifications}</td>
+                    </tr>
+                  )}
+                  {hasValidData(faculty.areasOfInterest) && (
+                    <tr>
+                      <th style={styles.tableHeader}>Areas of Interest</th>
+                      <td style={styles.tableData}>{faculty.areasOfInterest}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Scrollable Reviews Section */}
           <h3 style={styles.sectionTitle}>Student Insights</h3>
           
           {!faculty.reviews || faculty.reviews.length === 0 ? (
@@ -135,6 +162,13 @@ const styles = {
   closeBtn: { background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', color: '#999', lineHeight: 1 },
   contentScroll: { padding: '25px', overflowY: 'auto', flexGrow: 1, backgroundColor: '#fdfdfd' },
   sectionTitle: { marginTop: 0, marginBottom: '20px', color: '#333', fontSize: '1.2rem', borderBottom: '2px solid #f0f0f0', paddingBottom: '10px' },
+  
+  // NEW STYLES FOR ACADEMIC PROFILE
+  academicSection: { marginBottom: '30px' },
+  academicTable: { width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', border: '1px solid #eaeaea', borderRadius: '8px', overflow: 'hidden' },
+  tableHeader: { width: '35%', textAlign: 'left', padding: '12px 15px', backgroundColor: '#f4f7f6', color: '#333', borderBottom: '1px solid #eaeaea', borderRight: '1px solid #eaeaea', fontWeight: '600', fontSize: '0.9rem', verticalAlign: 'top' },
+  tableData: { padding: '12px 15px', borderBottom: '1px solid #eaeaea', color: '#555', fontSize: '0.9rem', lineHeight: '1.5' },
+
   emptyState: { textAlign: 'center', padding: '40px 20px', color: '#666', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px dashed #ccc' },
   reviewList: { display: 'flex', flexDirection: 'column', gap: '20px' },
   reviewCard: { backgroundColor: '#fff', border: '1px solid #eaeaea', borderRadius: '10px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },

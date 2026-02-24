@@ -1,6 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 const FacultyProfilePage = ({ faculty, onBack }) => {
+  const [copied, setCopied] = useState(false);
+
+  // Auto-hide the "Copied" status after 3 seconds
+  useEffect(() => {
+    let timer;
+    if (copied) {
+      timer = setTimeout(() => setCopied(false), 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   // Memoize the calculations so they only run when the faculty data changes
   const aggregatedData = useMemo(() => {
     if (!faculty || !faculty.reviews || faculty.reviews.length === 0) return null;
@@ -71,6 +82,21 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
     return { count, averages, topStrengths, topImprovements, allFeedback };
   }, [faculty]);
 
+  // --- SMOOTH EMAIL HANDLER ---
+  const handleEmailAction = (e) => {
+    e.preventDefault();
+    if (!faculty.email || faculty.email === "No email provided") return;
+
+    // 1. Silently copy to clipboard as a backup (useful if they use Outlook Web or Yahoo)
+    navigator.clipboard.writeText(faculty.email).then(() => {
+      setCopied(true);
+    }).catch(err => console.error("Failed to copy text: ", err));
+
+    // 2. Open Gmail securely in a new browser tab
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(faculty.email)}`;
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+  };
+
   // Helper to render average stars
   const renderStars = (avgValue) => {
     const rounded = Math.round(avgValue);
@@ -78,6 +104,10 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
       <span key={star} style={{ color: star <= rounded ? '#f5a623' : '#e4e5e9', fontSize: '1.4rem' }}>★</span>
     ));
   };
+
+  // Helper to check if a field actually has valid data
+  const hasValidData = (text) => text && text !== "Not provided" && text.trim() !== "";
+  const showAcademicProfile = hasValidData(faculty.qualifications) || hasValidData(faculty.areasOfInterest);
 
   return (
     <div style={styles.pageContainer}>
@@ -100,14 +130,54 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
           <div style={styles.badgesRow}>
             <span style={styles.ratingBadge}>⭐ {faculty.overallRating ? Number(faculty.overallRating).toFixed(1) : 'N/A'} Overall Rating</span>
             {aggregatedData && <span style={styles.reviewCountBadge}>📊 {aggregatedData.count} Verified Reviews</span>}
+            
+            {/* UPDATED BUTTON: Smooth Gmail trigger */}
+            {faculty.email && faculty.email !== "No email provided" && (
+              <button 
+                onClick={handleEmailAction} 
+                style={{
+                  ...styles.emailBadge, 
+                  backgroundColor: copied ? '#10b981' : '#ecfdf5', 
+                  color: copied ? '#ffffff' : '#047857',
+                  border: copied ? '1px solid #059669' : '1px solid #a7f3d0'
+                }}
+                title="Opens Gmail in a new tab"
+              >
+                {copied ? '✅ Opening Gmail...' : '✉️ Open in Gmail'}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Academic Profile Section */}
+      {showAcademicProfile && (
+        <div style={styles.academicCard}>
+          <h3 style={styles.cardTitle}>Academic Profile</h3>
+          <table style={styles.academicTable}>
+            <tbody>
+              {hasValidData(faculty.qualifications) && (
+                <tr>
+                  <th style={styles.tableHeader}>Educational Qualifications</th>
+                  <td style={styles.tableData}>{faculty.qualifications}</td>
+                </tr>
+              )}
+              {hasValidData(faculty.areasOfInterest) && (
+                <tr>
+                  <th style={styles.tableHeader}>Areas of Interest</th>
+                  <td style={styles.tableData}>{faculty.areasOfInterest}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Student Insights Dashboard */}
       {!aggregatedData ? (
         <div style={styles.emptyState}>
-          <h2 style={{ color: '#64748b' }}>No data available yet.</h2>
-          <p>Admins need to submit reviews to populate this dashboard.</p>
+          <h2 style={{ color: '#64748b' }}>No student insights available yet.</h2>
+          <p>Admins need to submit reviews to populate the student dashboard.</p>
         </div>
       ) : (
         <div style={styles.dashboardGrid}>
@@ -225,10 +295,18 @@ const styles = {
   profileInfo: { display: 'flex', flexDirection: 'column', gap: '8px' },
   name: { margin: 0, fontSize: '2.2rem', color: '#0f172a', fontWeight: '900' },
   department: { margin: 0, fontSize: '1.1rem', color: '#64748b' },
-  badgesRow: { display: 'flex', gap: '15px', marginTop: '10px' },
-  ratingBadge: { padding: '6px 14px', backgroundColor: '#eff6ff', color: '#1d4ed8', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' },
-  reviewCountBadge: { padding: '6px 14px', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' },
+  badgesRow: { display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' },
+  ratingBadge: { padding: '6px 14px', backgroundColor: '#eff6ff', color: '#1d4ed8', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center' },
+  reviewCountBadge: { padding: '6px 14px', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center' },
   
+  // EMAIL BADGE BUTTON STYLES
+  emailBadge: { padding: '6px 14px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', outline: 'none' },
+  
+  academicCard: { backgroundColor: '#ffffff', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '30px' },
+  academicTable: { width: '100%', borderCollapse: 'collapse', marginTop: '15px' },
+  tableHeader: { width: '25%', textAlign: 'left', padding: '16px 20px', backgroundColor: '#f8fafc', color: '#334155', borderBottom: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', fontWeight: '700', fontSize: '0.95rem', verticalAlign: 'top', borderRadius: '8px 0 0 8px' },
+  tableData: { padding: '16px 20px', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: '0.95rem', lineHeight: '1.6' },
+
   dashboardGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', alignItems: 'start' },
   metricsColumn: { display: 'flex', flexDirection: 'column', gap: '25px' },
   commentsColumn: { display: 'flex', flexDirection: 'column' },

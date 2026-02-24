@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const FacultyCard = ({ faculty, onClick }) => {
-  // Ensure we have a valid rating, otherwise default to 0
+  const [copied, setCopied] = useState(false);
+
   const rating = faculty.overallRating ? Number(faculty.overallRating).toFixed(1) : "0.0";
   const hasRating = rating !== "0.0";
+
+  const handleEmailClick = (e) => {
+    e.stopPropagation();
+    if (!faculty.email || faculty.email === "No email provided") return;
+
+    navigator.clipboard.writeText(faculty.email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(err => console.error("Clipboard failed", err));
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(faculty.email)}`;
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div style={styles.card} onClick={onClick}>
@@ -23,32 +37,31 @@ const FacultyCard = ({ faculty, onClick }) => {
       </div>
 
       <div style={styles.body}>
-        {/* Dynamic Designation & Department */}
         <p style={styles.designation}>
           {faculty.designation} <span style={styles.dot}>•</span> {faculty.department}
         </p>
 
-        {/* Educational Qualifications Snippet (if available) */}
         {faculty.qualifications && (
           <p style={styles.qualifications} title={faculty.qualifications}>
             🎓 {faculty.qualifications.length > 35 ? faculty.qualifications.substring(0, 35) + '...' : faculty.qualifications}
           </p>
         )}
 
-        {/* Email Display */}
         {faculty.email ? (
-          <a 
-            href={`mailto:${faculty.email}`} 
-            style={styles.emailLink} 
-            onClick={(e) => e.stopPropagation()} // Prevents opening the modal when clicking email
+          <span 
+            style={{ 
+              ...styles.emailLink, 
+              color: copied ? '#10b981' : '#0056b3',
+              backgroundColor: copied ? '#ecfdf5' : 'transparent'
+            }} 
+            onClick={handleEmailClick}
           >
-            ✉️ {faculty.email}
-          </a>
+            {copied ? '✅ Copied & Opening...' : `✉️ ${faculty.email}`}
+          </span>
         ) : (
           <p style={styles.noEmail}>✉️ No email provided</p>
         )}
 
-        {/* Rating Badge */}
         <div style={styles.footer}>
           <div style={{ ...styles.ratingBadge, backgroundColor: hasRating ? '#fef3c7' : '#f1f5f9', color: hasRating ? '#92400e' : '#64748b' }}>
             {hasRating ? `⭐ ${rating}` : '⭐ No Ratings'}
@@ -125,9 +138,12 @@ const styles = {
   emailLink: {
     margin: '0 0 15px 0',
     fontSize: '0.85rem',
-    color: '#0056b3',
-    textDecoration: 'none',
-    fontWeight: '600'
+    fontWeight: '600',
+    cursor: 'pointer',
+    display: 'inline-block',
+    padding: '4px 8px',
+    borderRadius: '6px',
+    transition: 'all 0.2s ease'
   },
   noEmail: { 
     margin: '0 0 15px 0', 
