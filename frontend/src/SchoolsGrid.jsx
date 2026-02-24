@@ -9,7 +9,7 @@ const SchoolsGrid = ({ onSelectSchool }) => {
     "School of Arts, Science and Humanities",
     "CeNTAB",
     "CARISM",
-    "School of LAW",
+    "School of Law",
     "Corporate Relations / Training & Placement",
     "Distance Education",
     "Srinivasa Ramanujan Centre"

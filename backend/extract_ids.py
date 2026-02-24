@@ -1,94 +1,166 @@
-import json
 import requests
 from bs4 import BeautifulSoup
-import time
+import json
+import re
 
-# The verified Request URL from your Network tab
-BASE_URL = "https://www.sastra.edu/staffprofiles/schools/soc.php"
+schools = {
+    "School of Computing": "https://sastra.edu/staffprofiles/schools/soc.php",
+    "School of Civil Engineering": "https://sastra.edu/staffprofiles/schools/civil.php",
+    "School of Electrical & Electronics Engineering": "https://sastra.edu/staffprofiles/schools/seee.php",
+    "School of Mechanical Engineering": "https://sastra.edu/staffprofiles/schools/mech.php",
+    "Tata Power": "https://sastra.edu/staffprofiles/schools/tp.php",
+    "Srinivasa Ramanujan Centre": "https://sastra.edu/staffprofiles/schools/src.php",
+    "School of Law": "https://sastra.edu/staffprofiles/schools/law.php",
+    "CARISM": "https://sastra.edu/staffprofiles/schools/carism.php",
+    "School of Humanities & Sciences": "https://sastra.edu/staffprofiles/schools/shs.php",
+    "School of Chemical & Biotechnology": "https://sastra.edu/staffprofiles/schools/scbt.php",
+    "School of Management": "https://sastra.edu/staffprofiles/schools/som.php"
+}
 
-def extract_faculty_data():
-    print("🚀 Team Aperture SOC Scraper: Initializing...")
-    faculty_list = []
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Arch Linux; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    }
+all_data = []
 
+print("Starting Universal Faculty Extraction...")
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+}
+
+for school_name, url in schools.items():
+    print(f"Scraping {school_name}...")
     try:
-        response = requests.get(BASE_URL, headers=headers)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Based on your Inspect Element (image_5d15c9.png), faculty cards are in col-3 divs
-        faculty_cards = soup.find_all('div', class_='col-3')
-        print(f"🔍 Found {len(faculty_cards)} faculty profiles in the DOM. Starting extraction...")
+        # --- FIX 1: The Pre-Processor ---
+        # Intercept the raw HTML and replace image-based '@' symbols with real text BEFORE parsing
+        raw_html = response.text
+        raw_html = re.sub(r'<img[^>]*atsym[^>]*>', '@', raw_html, flags=re.IGNORECASE)
+        raw_html = re.sub(r'\[at\]', '@', raw_html, flags=re.IGNORECASE)
+        
+        soup = BeautifulSoup(raw_html, 'html.parser')
+        
+        # Find all faculty images to use as our anchor points
+        images = soup.find_all('img', src=re.compile(r'upload/.*\.jpg', re.I))
+        if not images:
+            print(f"  -> ❌ No images found.")
+            continue
+        
+        school_faculty_count = 0
 
-        for card in faculty_cards:
-            # 1. Extract name from the card's visible heading or strong tag
-            name_tag = card.find(['h3', 'h4', 'strong', 'b'])
-            if not name_tag: continue
-            name = name_tag.get_text(strip=True)
+        for img in images:
+            img_src = img.get('src', '')
+            staff_id = img_src.split('/')[-1].replace('.jpg', '')
+            image_url = f"https://sastra.edu/staffprofiles/upload/{staff_id}.jpg"
 
-            # 2. Extract visible designation/email if they are in the card body (image_5d775e.jpg)
-            # Some info is visible directly under the name in the card
-            body_text = card.get_text(separator='|', strip=True)
+            # Climb DOM to find the specific container for this faculty
+            container = img.parent
+            card = container
+            while container and container.name != 'body':
+                if len(container.find_all('img', src=re.compile(r'upload/.*\.jpg', re.I))) > 1:
+                    break 
+                card = container
+                container = container.parent
             
-            # 3. Locate the hidden modal immediately following the card (image_5d15c9.png)
-            modal = card.find_next_sibling('div', class_='modal')
-            
-            # Initialize with best-guess defaults from body text
-            faculty_data = {
-                "name": name,
-                "school": "School of Computing",
-                "designation": "Faculty",
-                "department": "CSE",
+            if not card: continue
+                
+            # Extract clean lines of text from the card
+            text_lines = [line.strip() for line in card.get_text(separator='\n').split('\n') if line.strip()]
+            if not text_lines: continue
+                
+            faculty = {
+                "name": text_lines[0], 
+                "designation": "Faculty", 
                 "email": "",
-                "qualifications": "",
-                "areasOfInterest": "",
-                "imageUrl": "https://via.placeholder.com/150"
+                "school": school_name, 
+                "department": "General", 
+                "imageUrl": image_url,
+                "overallRating": 0,
+                "reviews": []
             }
+            
+            # --- FIX 2: Universal Card Text Parser ---
+            for i, line in enumerate(text_lines):
+                lower_line = line.lower()
+                
+                # Check explicitly for Department labels
+                if "department" in lower_line and ":" in lower_line:
+                    faculty["department"] = line.split(":", 1)[-1].strip()
+                elif lower_line == "department" and i + 1 < len(text_lines):
+                    faculty["department"] = text_lines[i+1]
+                    
+                # Check explicitly for Designation labels
+                if "designation" in lower_line and ":" in lower_line:
+                    faculty["designation"] = line.split(":", 1)[-1].strip()
+                elif lower_line == "designation" and i + 1 < len(text_lines):
+                    faculty["designation"] = text_lines[i+1]
+                    
+                # Look for email footprint
+                if "sastra.edu" in lower_line:
+                    clean_email = line.split(":")[-1].strip().replace(" ", "").replace('•', '@')
+                    if "@" not in clean_email and clean_email.endswith("sastra.edu"):
+                        pass # Kept as is if they just typed 'name.sastra.edu'
+                    faculty["email"] = clean_email
 
-            # Extract Email if present in card text (e.g., sriram@it.sastra.edu)
-            if "@" in body_text:
-                parts = body_text.split('|')
-                for p in parts:
-                    if "@" in p and "." in p:
-                        faculty_data['email'] = p.strip()
+            # Unlabelled Designation Fallback (Usually the 2nd line right under the name)
+            if faculty["designation"] == "Faculty" and len(text_lines) > 1:
+                line2 = text_lines[1]
+                if not any(x in line2.lower() for x in ["sastra.edu", "department", "school"]):
+                    faculty["designation"] = line2
+                    
+            # Handle combined text strings like "Asst. Professor • CSE"
+            if " • " in faculty["designation"] or " | " in faculty["designation"]:
+                parts = faculty["designation"].replace("|", "•").split("•")
+                faculty["designation"] = parts[0].strip()
+                if faculty["department"] == "General" and len(parts) > 1:
+                    faculty["department"] = parts[1].strip()
 
-            # 4. Deep-dive into the Table inside the Modal Inner (image_5d15c9.png)
-            if modal:
-                table = modal.find('table')
-                if table:
-                    for tr in table.find_all('tr'):
-                        th = tr.find('th')
-                        td = tr.find('td')
-                        if th and td:
-                            label = th.get_text(strip=True).lower()
-                            val = td.get_text(strip=True)
+            # --- FIX 3: The Hidden Modal Hunter ---
+            # If department or email is STILL missing, scan the hidden tables linked to this ID
+            if faculty["department"] == "General" or faculty["email"] == "":
+                # Find the hidden input trigger for this specific staff ID
+                modal_trigger = soup.find(id=re.compile(f"modal-{staff_id}", re.I))
+                
+                if modal_trigger:
+                    # The modal content wrapper is usually the immediate sibling div
+                    modal_wrapper = modal_trigger.find_next_sibling('div')
+                    
+                    if modal_wrapper:
+                        # Scan all table headers in the modal
+                        for th in modal_wrapper.find_all(['th', 'td', 'div']):
+                            th_text = th.get_text(strip=True).lower()
                             
-                            if 'designation' in label: faculty_data['designation'] = val
-                            elif 'department' in label: faculty_data['department'] = val
-                            elif 'educational' in label: faculty_data['qualifications'] = val
-                            elif 'areas of interest' in label: faculty_data['areasOfInterest'] = val
-                            elif 'email' in label: faculty_data['email'] = val
+                            # Dig out Department
+                            if faculty["department"] == "General" and "department" in th_text:
+                                nxt = th.find_next_sibling(['td', 'th', 'div'])
+                                if nxt: faculty["department"] = nxt.get_text(strip=True).replace(':', '').strip()
+                                    
+                            # Dig out Email
+                            if faculty["email"] == "" and ("email" in th_text or "mail" in th_text):
+                                nxt = th.find_next_sibling(['td', 'th', 'div'])
+                                if nxt:
+                                    em = nxt.get_text(strip=True).replace(':', '').strip().replace(" ", "")
+                                    if "sastra.edu" in em.lower(): faculty["email"] = em
 
-            # 5. Capture Profile Image
-            img = card.find('img')
-            if img and img.get('src'):
-                img_src = img['src']
-                faculty_data['imageUrl'] = img_src if img_src.startswith('http') else f"https://www.sastra.edu/staffprofiles/schools/{img_src}"
-
-            faculty_list.append(faculty_data)
-            print(f"✅ Extracted: {name} ({faculty_data['designation']})")
-
+            all_data.append(faculty)
+            school_faculty_count += 1
+            
+        print(f"  -> ✅ Found {school_faculty_count} members.")
+            
     except Exception as e:
-        print(f"❌ Scraper Failed: {e}")
+        print(f"  -> ❌ Error scraping {school_name}: {e}")
 
-    # Write to the file used by your Node.js seeder
-    with open('extracted_faculty.json', 'w', encoding='utf-8') as f:
-        json.dump(faculty_list, f, indent=4, ensure_ascii=False)
-    
-    print(f"🎉 Success! {len(faculty_list)} full profiles saved to extracted_faculty.json")
+# Deduplicate
+unique_data = []
+seen = set()
+for f in all_data:
+    identifier = f["name"] + f["imageUrl"]
+    if identifier not in seen:
+        seen.add(identifier)
+        unique_data.append(f)
 
-if __name__ == "__main__":
-    extract_faculty_data()
+js_content = f"const seedData = {json.dumps(unique_data, indent=2)};\n\nmodule.exports = seedData;"
+with open('seedData.js', 'w', encoding='utf-8') as file:
+    file.write(js_content)
+
+print(f"\nSuccess! Extracted {len(unique_data)} unique faculty profiles.")
+print("Data saved to 'seedData.js'. Run 'node seed.js' to seed MongoDB!")

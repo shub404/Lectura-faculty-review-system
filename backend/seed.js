@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Faculty = require('./models/Faculty'); 
-const facultyData = require('./seedData.json');
+// Use the JSON file extracted by your Python script
+const facultyData = require('./seedData.json'); 
 
 dotenv.config();
 
@@ -16,10 +17,15 @@ const seedDatabase = async () => {
     
     // Clean data: Ensure every object has the required fields
     const sanitizedData = facultyData.map(f => ({
-      ...f,
-      department: f.department || "General",
-      designation: f.designation || "Faculty",
-      email: f.email || ""
+      name: f.name || "Unknown",
+      school: f.school || "General",
+      imageUrl: f.imageUrl || "",
+      // Use scraped data if available, else use defaults
+      department: f.department && f.department !== "General" ? f.department : (f.dept || "General"),
+      designation: f.designation && f.designation !== "Faculty" ? f.designation : (f.desig || "Faculty"),
+      email: f.email || "No email provided",
+      overallRating: 0,
+      reviews: []
     }));
 
     console.log(`Inserting ${sanitizedData.length} Faculty members...`);
