@@ -9,7 +9,6 @@ def main():
     input_data = sys.stdin.read()
     comments = json.loads(input_data)
 
-
     combined_text = " ".join(comments)
 
     if len(combined_text) < 50:
