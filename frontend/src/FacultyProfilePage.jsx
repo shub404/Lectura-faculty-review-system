@@ -2,6 +2,9 @@ import React, { useMemo, useState, useEffect } from 'react';
 
 const FacultyProfilePage = ({ faculty, onBack }) => {
   const [copied, setCopied] = useState(false);
+  const [aiSummary, setAiSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
 
   // Auto-hide the "Copied" status after 3 seconds
   useEffect(() => {
@@ -26,7 +29,6 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
     let allFeedback = [];
 
     faculty.reviews.forEach(review => {
-      // Aggregate numeric scores
       sums.satisfaction += review.satisfaction || 0;
       sums.approachability += review.approachability || 0;
       
@@ -38,21 +40,18 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
         sums.knowledgeDepth += review.ratings.knowledgeDepth || 0;
       }
 
-      // Aggregate tags for Strengths
       if (review.context && review.context.strengths) {
         review.context.strengths.forEach(tag => {
           tagFrequency.strengths[tag] = (tagFrequency.strengths[tag] || 0) + 1;
         });
       }
 
-      // Aggregate tags for Improvements
       if (review.context && review.context.improvements) {
         review.context.improvements.forEach(tag => {
           tagFrequency.improvements[tag] = (tagFrequency.improvements[tag] || 0) + 1;
         });
       }
 
-      // Collect honest lines
       if (review.feedback && review.feedback.trim() !== '') {
         allFeedback.push({
           text: review.feedback,
@@ -63,41 +62,73 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
       }
     });
 
-    // Calculate Averages
     const averages = {};
     Object.keys(sums).forEach(key => {
       averages[key] = (sums[key] / count).toFixed(1);
     });
 
-    // Sort to get top 3 tags
     const topStrengths = Object.entries(tagFrequency.strengths)
       .sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
       
     const topImprovements = Object.entries(tagFrequency.improvements)
       .sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
 
-    // Sort feedback by newest first
     allFeedback.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return { count, averages, topStrengths, topImprovements, allFeedback };
   }, [faculty]);
 
-  // --- SMOOTH EMAIL HANDLER ---
+  /* ============================================================
+     🤖 GENERATE AI SUMMARY (ADDED)
+  ============================================================ */
+  useEffect(() => {
+    const generateSummary = async () => {
+
+      if (!aggregatedData || aggregatedData.allFeedback.length === 0) {
+        setAiSummary(null);
+        return;
+      }
+
+      try {
+        setLoadingSummary(true);
+        setSummaryError(null);
+
+        const response = await fetch('http://localhost:5000/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            comments: aggregatedData.allFeedback.map(f => f.text)
+          })
+        });
+
+        if (!response.ok) throw new Error("Summarization failed");
+
+        const data = await response.json();
+        setAiSummary(data.summary);
+
+      } catch (err) {
+        console.error(err);
+        setSummaryError("Failed to generate AI summary.");
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    generateSummary();
+  }, [aggregatedData]);
+
   const handleEmailAction = (e) => {
     e.preventDefault();
     if (!faculty.email || faculty.email === "No email provided") return;
 
-    // 1. Silently copy to clipboard as a backup (useful if they use Outlook Web or Yahoo)
     navigator.clipboard.writeText(faculty.email).then(() => {
       setCopied(true);
     }).catch(err => console.error("Failed to copy text: ", err));
 
-    // 2. Open Gmail securely in a new browser tab
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(faculty.email)}`;
     window.open(gmailUrl, '_blank', 'noopener,noreferrer');
   };
 
-  // Helper to render average stars
   const renderStars = (avgValue) => {
     const rounded = Math.round(avgValue);
     return [1, 2, 3, 4, 5].map(star => (
@@ -105,18 +136,15 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
     ));
   };
 
-  // Helper to check if a field actually has valid data
   const hasValidData = (text) => text && text !== "Not provided" && text.trim() !== "";
   const showAcademicProfile = hasValidData(faculty.qualifications) || hasValidData(faculty.areasOfInterest);
 
   return (
     <div style={styles.pageContainer}>
-      {/* Navigation Header */}
       <div style={styles.navBar}>
         <button onClick={onBack} style={styles.backBtn}>← Back to Key List</button>
       </div>
 
-      {/* Profile Header */}
       <div style={styles.profileHeader}>
         <img 
           src={faculty.imageUrl} 
@@ -131,7 +159,6 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
             <span style={styles.ratingBadge}>⭐ {faculty.overallRating ? Number(faculty.overallRating).toFixed(1) : 'N/A'} Overall Rating</span>
             {aggregatedData && <span style={styles.reviewCountBadge}>📊 {aggregatedData.count} Verified Reviews</span>}
             
-            {/* UPDATED BUTTON: Smooth Gmail trigger */}
             {faculty.email && faculty.email !== "No email provided" && (
               <button 
                 onClick={handleEmailAction} 
@@ -150,7 +177,6 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
         </div>
       </div>
 
-      {/* Academic Profile Section */}
       {showAcademicProfile && (
         <div style={styles.academicCard}>
           <h3 style={styles.cardTitle}>Academic Profile</h3>
@@ -173,7 +199,6 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
         </div>
       )}
 
-      {/* Student Insights Dashboard */}
       {!aggregatedData ? (
         <div style={styles.emptyState}>
           <h2 style={{ color: '#64748b' }}>No student insights available yet.</h2>
@@ -182,8 +207,20 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
       ) : (
         <div style={styles.dashboardGrid}>
           
-          {/* Left Column: Averages & Metrics */}
           <div style={styles.metricsColumn}>
+
+            {/* 🤖 AI SUMMARY CARD (NEW, NO UI MODIFICATIONS) */}
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>🤖 AI-Generated Student Insight</h3>
+              {loadingSummary && <p style={styles.noData}>Generating intelligent summary...</p>}
+              {summaryError && <p style={{ color: 'red' }}>{summaryError}</p>}
+              {aiSummary && <p style={{ lineHeight: '1.7', color: '#334155' }}>{aiSummary}</p>}
+              {!loadingSummary && !aiSummary && !summaryError && (
+                <p style={styles.noData}>Not enough written feedback to summarize.</p>
+              )}
+            </div>
+
+            {/* ALL YOUR EXISTING CARDS BELOW (UNCHANGED) */}
             
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>Vibe & Comfort Averages</h3>
