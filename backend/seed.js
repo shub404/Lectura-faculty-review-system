@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Faculty = require('./models/Faculty'); 
-const facultyData = require('./seedData.json'); 
+const Faculty = require('./models/Faculty');
+const facultyData = require('./seedData.json');
 
 dotenv.config();
 
@@ -13,29 +13,28 @@ const seedDatabase = async () => {
 
     console.log('Clearing old faculty data...');
     await Faculty.deleteMany({});
-    
-    const sanitizedData = facultyData.map(f => ({
+
+    const sanitizedData = facultyData.map((f, index) => ({
       name: f.name || "Unknown",
       school: f.school || "General",
       imageUrl: f.imageUrl || "",
       department: f.department && f.department !== "General" ? f.department : (f.dept || "General"),
       designation: f.designation && f.designation !== "Faculty" ? f.designation : (f.desig || "Faculty"),
       email: f.email || "No email provided",
-      
-      // --- NEW FIELDS ADDED HERE ---
+
       qualifications: f.qualifications || "Not provided",
       areasOfInterest: f.areasOfInterest || "Not provided",
-      // ------------------------------
 
+      order: index, // Preserves original seedData.json order
       overallRating: 0,
       reviews: []
     }));
 
     console.log(`Inserting ${sanitizedData.length} Faculty members with full profiles...`);
     await Faculty.insertMany(sanitizedData);
-    
+
     console.log(`✅ SUCCESS! ${sanitizedData.length} members updated on Lectura Portal.`);
-    
+
     mongoose.connection.close();
     process.exit(0);
   } catch (err) {

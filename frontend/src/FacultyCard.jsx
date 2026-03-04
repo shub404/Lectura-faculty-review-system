@@ -22,16 +22,16 @@ const FacultyCard = ({ faculty, onClick }) => {
   return (
     <div style={styles.card} onClick={onClick}>
       <div style={styles.imageContainer}>
-        <img 
-          src={faculty.imageUrl} 
-          alt={faculty.name} 
+        <img
+          src={faculty.imageUrl}
+          alt={faculty.name}
           style={styles.image}
-          onError={(e) => { 
-            e.target.src = 'https://via.placeholder.com/150/0056b3/FFFFFF?text=' + faculty.name.charAt(0); 
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/150/0056b3/FFFFFF?text=' + faculty.name.charAt(0);
           }}
         />
       </div>
-      
+
       <div style={styles.header}>
         <h3 style={styles.name}>{faculty.name}</h3>
       </div>
@@ -48,12 +48,12 @@ const FacultyCard = ({ faculty, onClick }) => {
         )}
 
         {faculty.email ? (
-          <span 
-            style={{ 
-              ...styles.emailLink, 
+          <span
+            style={{
+              ...styles.emailLink,
               color: copied ? '#10b981' : '#0056b3',
               backgroundColor: copied ? '#ecfdf5' : 'transparent'
-            }} 
+            }}
             onClick={handleEmailClick}
           >
             {copied ? '✅ Copied & Opening...' : `✉️ ${faculty.email}`}
@@ -73,10 +73,10 @@ const FacultyCard = ({ faculty, onClick }) => {
 };
 
 const styles = {
-  card: { 
-    backgroundColor: '#ffffff', 
-    borderRadius: '16px', 
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', 
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: '16px',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
     border: '1px solid #e2e8f0',
     overflow: 'hidden',
     cursor: 'pointer',
@@ -85,45 +85,45 @@ const styles = {
     flexDirection: 'column',
     height: '100%'
   },
-  imageContainer: { 
-    display: 'flex', 
-    justifyContent: 'center', 
+  imageContainer: {
+    display: 'flex',
+    justifyContent: 'center',
     padding: '25px 0 15px 0',
-    backgroundColor: '#f8fafc' 
+    backgroundColor: '#f8fafc'
   },
-  image: { 
-    width: '100px', 
-    height: '100px', 
-    borderRadius: '50%', 
-    objectFit: 'cover', 
+  image: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    objectFit: 'cover',
     border: '4px solid #ffffff',
     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
   },
-  header: { 
-    backgroundColor: '#0056b3', 
-    padding: '12px', 
-    textAlign: 'center' 
+  header: {
+    backgroundColor: '#0056b3',
+    padding: '12px',
+    textAlign: 'center'
   },
-  name: { 
-    margin: 0, 
-    color: '#ffffff', 
-    fontSize: '1.05rem', 
+  name: {
+    margin: 0,
+    color: '#ffffff',
+    fontSize: '1.05rem',
     fontWeight: '700',
     letterSpacing: '0.5px',
     textTransform: 'uppercase'
   },
-  body: { 
-    padding: '20px', 
+  body: {
+    padding: '20px',
     textAlign: 'center',
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1
   },
-  designation: { 
-    margin: '0 0 10px 0', 
-    fontSize: '0.95rem', 
-    fontWeight: '700', 
-    color: '#0f172a' 
+  designation: {
+    margin: '0 0 10px 0',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    color: '#0f172a'
   },
   dot: {
     color: '#cbd5e1',
@@ -145,21 +145,21 @@ const styles = {
     borderRadius: '6px',
     transition: 'all 0.2s ease'
   },
-  noEmail: { 
-    margin: '0 0 15px 0', 
-    fontSize: '0.85rem', 
+  noEmail: {
+    margin: '0 0 15px 0',
+    fontSize: '0.85rem',
     color: '#94a3b8',
     fontStyle: 'italic'
   },
-  footer: { 
-    marginTop: 'auto', 
-    display: 'flex', 
-    justifyContent: 'center' 
+  footer: {
+    marginTop: 'auto',
+    display: 'flex',
+    justifyContent: 'center'
   },
-  ratingBadge: { 
-    padding: '6px 16px', 
-    borderRadius: '20px', 
-    fontSize: '0.9rem', 
+  ratingBadge: {
+    padding: '6px 16px',
+    borderRadius: '20px',
+    fontSize: '0.9rem',
     fontWeight: 'bold',
     border: '1px solid #e2e8f0'
   }

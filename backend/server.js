@@ -2,7 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { spawn } = require('child_process');   // 🔥 ADD THIS
+const { spawn } = require('child_process');
+const path = require('path');
 const Faculty = require('./models/Faculty');
 
 dotenv.config();
@@ -21,13 +22,12 @@ mongoose.connect(process.env.MONGO_URI)
 ============================================================ */
 app.get('/api/faculty', async (req, res) => {
   try {
-    const faculties = await Faculty.find();
+    const faculties = await Faculty.find().sort({ order: 1 });
     res.json(faculties);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 /* ============================================================
    ADD REVIEW
@@ -42,7 +42,7 @@ app.post('/api/faculty/:id/reviews', async (req, res) => {
     // Recalculate overall rating
     if (faculty.reviews.length > 0) {
       const totalSatisfaction = faculty.reviews.reduce(
-        (sum, rev) => sum + (rev.satisfaction || 0), 
+        (sum, rev) => sum + (rev.satisfaction || 0),
         0
       );
       faculty.overallRating = (totalSatisfaction / faculty.reviews.length).toFixed(1);
@@ -57,27 +57,50 @@ app.post('/api/faculty/:id/reviews', async (req, res) => {
   }
 });
 
+/* ============================================================
+   🚩 FLAG / REPORT A REVIEW
+============================================================ */
+app.post('/api/faculty/:facultyId/reviews/:reviewId/flag', async (req, res) => {
+  try {
+    const faculty = await Faculty.findById(req.params.facultyId);
+    if (!faculty) return res.status(404).json({ error: "Faculty not found" });
+
+    const review = faculty.reviews.id(req.params.reviewId);
+    if (!review) return res.status(404).json({ error: "Review not found" });
+
+    review.flagged = true;
+    await faculty.save();
+    res.json({ message: "Review has been flagged for admin review.", faculty });
+
+  } catch (err) {
+    console.error('❌ Flag Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /* ============================================================
    🤖 AI SUMMARIZATION ROUTE
 ============================================================ */
 app.post('/api/summarize', (req, res) => {
-  const { comments } = req.body;
+  const { reviews } = req.body;
 
-  if (!comments || comments.length === 0) {
+  if (!reviews || reviews.length === 0) {
     return res.json({ summary: "Not enough feedback available." });
   }
 
-  // 🔥 Make sure this path is correct
-    const python = spawn('py', ['-3.13', 'summariser.py'], {
-        cwd: __dirname
-    });
+  // TARGET: Root venv (one directory up from backend)
+  const pythonExecutable = path.join(__dirname, '..', 'venv', 'bin', 'python');
+
+  const python = spawn(pythonExecutable, ['summariser.py'], {
+    cwd: __dirname,
+    env: { ...process.env, PYTHONUNBUFFERED: '1' }
+  });
 
   let summary = '';
   let errorOutput = '';
 
-  // Send comments to Python
-  python.stdin.write(JSON.stringify(comments));
+  // Send full review objects to Python via stdin
+  python.stdin.write(JSON.stringify(reviews));
   python.stdin.end();
 
   // Capture Python output
@@ -87,18 +110,22 @@ app.post('/api/summarize', (req, res) => {
 
   python.stderr.on('data', (data) => {
     errorOutput += data.toString();
+    console.error(`[Python Log]: ${data.toString().trim()}`);
+  });
+
+  python.on('error', (err) => {
+    console.error('❌ Python Spawn Error:', err);
+    res.status(500).json({ error: 'Failed to start AI engine' });
   });
 
   python.on('close', (code) => {
     if (code !== 0) {
-      console.error('❌ Python Error:', errorOutput);
+      console.error('❌ Python Exit Code:', code);
       return res.status(500).json({ error: 'Summarization failed' });
     }
-
     res.json({ summary: summary.trim() });
   });
 });
-
 
 /* ============================================================
    START SERVER

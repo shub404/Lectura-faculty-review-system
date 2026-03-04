@@ -35,6 +35,7 @@ const ReviewSchema = new mongoose.Schema({
 
     feedback: { type: String, maxlength: 120 }, // Short 120 char line
     adminId: { type: String },
+    flagged: { type: Boolean, default: false }, // Report/Flag review feature
     date: { type: Date, default: Date.now }
 });
 
@@ -47,6 +48,7 @@ const FacultySchema = new mongoose.Schema({
     imageUrl: { type: String, default: 'https://via.placeholder.com/150' },
     qualifications: { type: String, default: "" },
     areasOfInterest: { type: String, default: "" },
+    order: { type: Number, default: 0 }, // Preserves seedData.json order
     overallRating: { type: Number, default: 0 },
     reviews: [ReviewSchema]
 });

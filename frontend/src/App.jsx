@@ -8,12 +8,12 @@ import FacultyProfilePage from './FacultyProfilePage'; // <-- Import the new pag
 function App() {
   const [faculties, setFaculties] = useState([]);
   const [status, setStatus] = useState('Connecting...');
-  
+
   // App Navigation States
   const [currentView, setCurrentView] = useState('home'); // 'home', 'school', 'profile', 'admin-login'
   const [selectedSchool, setSelectedSchool] = useState('');
   const [viewingFaculty, setViewingFaculty] = useState(null);
-  
+
   // Search, Filter, and Auth States
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDept, setActiveDept] = useState('All');
@@ -56,13 +56,13 @@ function App() {
       const response = await fetch(`http://localhost:5000/api/faculty/${viewingFaculty._id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...reviewData, adminId: adminUser }) 
+        body: JSON.stringify({ ...reviewData, adminId: adminUser })
       });
 
       if (response.ok) {
         alert('✅ Official Review Published Successfully!');
-        fetchFaculties(); 
-        setViewingFaculty(null); 
+        fetchFaculties();
+        setViewingFaculty(null);
       } else {
         const errorData = await response.json();
         console.error("Backend Error:", errorData);
@@ -75,13 +75,13 @@ function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: '#f4f7f6' }}>
-      
+
       {/* 1. Admin Review Overlay */}
       {viewingFaculty && adminUser && (
-        <ReviewModal 
-          faculty={viewingFaculty} 
-          onClose={() => setViewingFaculty(null)} 
-          onSubmit={handleAdminReviewSubmit} 
+        <ReviewModal
+          faculty={viewingFaculty}
+          onClose={() => setViewingFaculty(null)}
+          onSubmit={handleAdminReviewSubmit}
         />
       )}
 
@@ -94,7 +94,7 @@ function App() {
             <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>{adminUser ? `Admin Mode Active: ${adminUser}` : 'Student-Driven Faculty Reviews'}</p>
           </div>
         </div>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ fontSize: '0.85rem' }}>System Status: <span style={{ color: status === 'Online' ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>{status}</span></div>
           {adminUser && (
@@ -102,14 +102,14 @@ function App() {
           )}
         </div>
       </header>
-      
+
       {/* 3. Main Content Routing Area */}
       <main style={{ flexGrow: 1, width: '100%', boxSizing: 'border-box', padding: currentView === 'profile' ? '0' : '30px 20px', maxWidth: currentView === 'profile' ? '100%' : '1200px', margin: '0 auto' }}>
-        
+
         {currentView === 'admin-login' && (
-          <AdminLogin 
-            onLoginSuccess={(id) => { setAdminUser(id); setCurrentView('home'); }} 
-            onCancel={() => setCurrentView('home')} 
+          <AdminLogin
+            onLoginSuccess={(id) => { setAdminUser(id); setCurrentView('home'); }}
+            onCancel={() => setCurrentView('home')}
           />
         )}
 
@@ -119,9 +119,9 @@ function App() {
 
         {/* The New Student Profile Page Router */}
         {currentView === 'profile' && viewingFaculty && (
-          <FacultyProfilePage 
-            faculty={viewingFaculty} 
-            onBack={() => { setCurrentView('school'); setViewingFaculty(null); }} 
+          <FacultyProfilePage
+            faculty={viewingFaculty}
+            onBack={() => { setCurrentView('school'); setViewingFaculty(null); }}
           />
         )}
 
@@ -134,19 +134,19 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                <input 
-                  type="text" 
-                  placeholder="🔍 Search professor by name..." 
+                <input
+                  type="text"
+                  placeholder="🔍 Search professor by name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ flexGrow: 1, padding: '12px', borderRadius: '4px', border: '1px solid #ddd', minWidth: '250px', outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {depts.map(d => (
-                    <button 
-                      key={d} 
+                    <button
+                      key={d}
                       onClick={() => setActiveDept(d)}
-                      style={{ 
+                      style={{
                         padding: '8px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer',
                         backgroundColor: activeDept === d ? (adminUser ? '#dc3545' : '#0056b3') : '#eee',
                         color: activeDept === d ? 'white' : '#555',
