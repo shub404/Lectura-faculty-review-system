@@ -1,14 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+
+:root {
+  --stitch-primary: #10b77f;
+  --stitch-primary-light: rgba(16, 183, 127, 0.1);
+  --stitch-background: #f6f8f7;
+  --stitch-navy: #1e293b;
+  --stitch-text-main: #0f172a;
+  --stitch-text-muted: #64748b;
+  --stitch-border: #e2e8f0;
+  --stitch-white: #ffffff;
+  --stitch-radius-lg: 1rem;
+  --stitch-radius-xl: 1.5rem;
+  --stitch-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f2f5;
+html,
+body {
+  font-family: 'Lexend', sans-serif;
+  background-color: var(--stitch-background);
+  color: var(--stitch-text-main);
   width: 100%;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -18,6 +38,9 @@ html, body {
   flex-direction: column;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
 }

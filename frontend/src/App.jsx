@@ -74,7 +74,7 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: '#f4f7f6' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: 'var(--stitch-background)' }}>
 
       {/* 1. Admin Review Overlay */}
       {viewingFaculty && adminUser && (
@@ -86,19 +86,46 @@ function App() {
       )}
 
       {/* 2. Global Header */}
-      <header style={{ backgroundColor: '#ffffff', borderBottom: adminUser ? '4px solid #dc3545' : '4px solid #0056b3', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', width: '100%', boxSizing: 'border-box' }}>
-        <div onClick={() => { setCurrentView('home'); setSearchTerm(''); setActiveDept('All'); setViewingFaculty(null); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '45px', height: '45px', backgroundColor: adminUser ? '#dc3545' : '#0056b3', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem', transition: 'background-color 0.3s' }}>SASTRA</div>
-          <div>
-            <h1 style={{ margin: '0', fontSize: '1.4rem', color: adminUser ? '#dc3545' : '#0056b3' }}>Lectura Portal</h1>
-            <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>{adminUser ? `Admin Mode Active: ${adminUser}` : 'Student-Driven Faculty Reviews'}</p>
+      <header style={{
+        backgroundColor: 'var(--stitch-navy)',
+        borderBottom: adminUser ? '4px solid #dc3545' : 'none',
+        padding: '12px 24px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: 'var(--stitch-shadow)',
+        width: '100%',
+        boxSizing: 'border-box',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50
+      }}>
+        <div onClick={() => { setCurrentView('home'); setSearchTerm(''); setActiveDept('All'); setViewingFaculty(null); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            backgroundColor: adminUser ? '#dc3545' : 'var(--stitch-primary)',
+            borderRadius: '50%',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            fontSize: '0.7rem',
+            transition: 'background-color 0.3s'
+          }}>SASTRA</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1 style={{ margin: '0', fontSize: '1.25rem', color: 'white', fontWeight: 'bold', lineHeight: '1' }}>Lectura Portal</h1>
+            <p style={{ margin: 0, fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', trackingWide: '0.05em' }}>SASTRA UNIVERSITY</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ fontSize: '0.85rem' }}>System Status: <span style={{ color: status === 'Online' ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>{status}</span></div>
+          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
+            System Status: <span style={{ color: status === 'Online' ? 'var(--stitch-primary)' : '#dc3545', fontWeight: 'bold' }}>{status}</span>
+          </div>
           {adminUser && (
-            <button onClick={() => { setAdminUser(null); setCurrentView('home'); }} style={{ padding: '6px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Exit Admin</button>
+            <button onClick={() => { setAdminUser(null); setCurrentView('home'); }} style={{ padding: '6px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}>Exit Admin</button>
           )}
         </div>
       </header>
@@ -127,30 +154,31 @@ function App() {
 
         {currentView === 'school' && (
           <div>
-            <div style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#333', fontWeight: 'normal', margin: 0 }}>Faculty Key List - <span style={{ color: adminUser ? '#dc3545' : '#0056b3', fontWeight: 'bold' }}>{selectedSchool}</span></h2>
-                <button onClick={() => { setCurrentView('home'); setSearchTerm(''); setActiveDept('All'); }} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', border: `1px solid ${adminUser ? '#dc3545' : '#0056b3'}`, background: 'none', color: adminUser ? '#dc3545' : '#0056b3', fontWeight: 'bold' }}>← Back</button>
+                <h2 style={{ color: 'var(--stitch-navy)', fontWeight: 'bold', margin: 0, fontSize: '1.5rem' }}>Faculty Key List - <span style={{ color: 'var(--stitch-primary)' }}>{selectedSchool}</span></h2>
+                <button onClick={() => { setCurrentView('home'); setSearchTerm(''); setActiveDept('All'); }} style={{ padding: '10px 20px', borderRadius: 'var(--stitch-radius-lg)', cursor: 'pointer', border: '1px solid var(--stitch-border)', background: 'var(--stitch-white)', color: 'var(--stitch-navy)', fontWeight: 'bold', fontSize: '0.9rem', boxShadow: 'var(--stitch-shadow)' }}>← Back</button>
               </div>
 
-              <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: 'var(--stitch-white)', padding: '24px', borderRadius: 'var(--stitch-radius-xl)', boxShadow: 'var(--stitch-shadow)', border: '1px solid var(--stitch-border)' }}>
                 <input
                   type="text"
                   placeholder="🔍 Search professor by name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ flexGrow: 1, padding: '12px', borderRadius: '4px', border: '1px solid #ddd', minWidth: '250px', outline: 'none' }}
+                  style={{ width: '100%', padding: '14px 20px', borderRadius: 'var(--stitch-radius-lg)', border: '1px solid var(--stitch-border)', outline: 'none', fontSize: '1rem', backgroundColor: '#f8fafc' }}
                 />
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--stitch-text-muted)', textTransform: 'uppercase', trackingWide: '0.05em' }}>Filter:</span>
                   {depts.map(d => (
                     <button
                       key={d}
                       onClick={() => setActiveDept(d)}
                       style={{
-                        padding: '8px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-                        backgroundColor: activeDept === d ? (adminUser ? '#dc3545' : '#0056b3') : '#eee',
-                        color: activeDept === d ? 'white' : '#555',
-                        fontSize: '0.85rem', fontWeight: 'bold', transition: 'background-color 0.2s'
+                        padding: '8px 16px', borderRadius: 'var(--stitch-radius-lg)', border: 'none', cursor: 'pointer',
+                        backgroundColor: activeDept === d ? 'var(--stitch-primary)' : 'var(--stitch-primary-light)',
+                        color: activeDept === d ? 'white' : 'var(--stitch-primary)',
+                        fontSize: '0.85rem', fontWeight: 'bold', transition: 'all 0.2s ease'
                       }}
                     >
                       {d}
@@ -170,10 +198,17 @@ function App() {
         )}
       </main>
 
-      <footer style={{ textAlign: 'center', padding: '25px', backgroundColor: '#24292e', color: 'white', marginTop: 'auto' }}>
-        <p style={{ fontSize: '0.85rem', margin: '0 0 10px 0', opacity: 0.8 }}>© 2026 Lectura Project (Team Aperture). For academic use only.</p>
+      <footer style={{
+        textAlign: 'center',
+        padding: '40px 24px',
+        backgroundColor: 'var(--stitch-navy)',
+        color: 'rgba(255,255,255,0.6)',
+        marginTop: 'auto',
+        borderTop: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <p style={{ fontSize: '0.85rem', margin: '0 0 12px 0', fontWeight: '500' }}>© 2026 Lectura Project (Team Aperture). For academic use only.</p>
         {!adminUser && (
-          <button onClick={() => setCurrentView('admin-login')} style={{ color: '#58a6ff', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', textDecoration: 'underline' }}>
+          <button onClick={() => setCurrentView('admin-login')} style={{ color: 'var(--stitch-primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
             Authorized Admin Login
           </button>
         )}
