@@ -95,7 +95,7 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
         setLoadingSummary(true);
         setSummaryError(null);
 
-        const response = await fetch('http://localhost:5000/api/summarize', {
+        const response = await fetch('https://lectura-faculty-review-system.onrender.com/api/summarize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -309,7 +309,7 @@ const FacultyProfilePage = ({ faculty, onBack }) => {
                               onClick={async () => {
                                 if (!window.confirm('Are you sure you want to report this review as inappropriate?')) return;
                                 try {
-                                  const resp = await fetch(`http://localhost:5000/api/faculty/${faculty._id}/reviews/${fb._id}/flag`, { method: 'POST' });
+                                  const resp = await fetch(`https://lectura-faculty-review-system.onrender.com/api/faculty/${faculty._id}/reviews/${fb._id}/flag`, { method: 'POST' });
                                   if (resp.ok) {
                                     alert('✅ Review has been flagged for admin review.');
                                     window.location.reload();
