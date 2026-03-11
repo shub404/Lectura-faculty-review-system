@@ -77,7 +77,7 @@ app.post('/api/summarize', (req, res) => {
     return res.json({ summary: "Not enough feedback available." });
   }
 
-  const pythonExecutable ='python3';
+  const pythonExecutable ='python';
 
   const python = spawn(pythonExecutable, [path.join(__dirname, 'summariser.py')], {
     cwd: __dirname,
@@ -106,12 +106,15 @@ app.post('/api/summarize', (req, res) => {
   });
 
   python.on('close', (code) => {
-    if (code !== 0) {
-      console.error('❌ Python Exit Code:', code);
-      return res.status(500).json({ error: 'Summarization failed' });
-    }
-    res.json({ summary: summary.trim() });
-  });
+  if (code !== 0) {
+    console.error('❌ Python Exit Code:', code);
+    console.error('❌ Python Error:', errorOutput);
+    return res.status(500).json({ error: 'Summarization failed' });
+  }
+
+  console.log("✅ AI Summary:", summary);
+  res.json({ summary: summary.trim() });
+});
 });
 
 const PORT = process.env.PORT || 5000;
