@@ -21,7 +21,7 @@ function App() {
 
   const fetchFaculties = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/faculty');
+      const response = await fetch('https://lectura-faculty-review-system.onrender.com/api/faculty');
       const data = await response.json();
       setFaculties(data);
       setStatus('Online');
@@ -53,7 +53,7 @@ function App() {
 
   const handleAdminReviewSubmit = async (reviewData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/faculty/${viewingFaculty._id}/reviews`, {
+      const response = await fetch(`https://lectura-faculty-review-system.onrender.com/api/faculty/${viewingFaculty._id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...reviewData, adminId: adminUser })

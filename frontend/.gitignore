@@ -31,4 +31,13 @@ backend/venv/
 __pycache__/
 *.pyc
 
+# Security & Secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+
+# Python Environment
+backend/venv/
+venv/
+.python-version
 
