@@ -17,9 +17,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-/* ============================================================
-   GET ALL FACULTY
-============================================================ */
+
 app.get('/api/faculty', async (req, res) => {
   try {
     const faculties = await Faculty.find().sort({ order: 1 });
@@ -29,9 +27,6 @@ app.get('/api/faculty', async (req, res) => {
   }
 });
 
-/* ============================================================
-   ADD REVIEW
-============================================================ */
 app.post('/api/faculty/:id/reviews', async (req, res) => {
   try {
     const faculty = await Faculty.findById(req.params.id);
@@ -39,7 +34,6 @@ app.post('/api/faculty/:id/reviews', async (req, res) => {
 
     faculty.reviews.push(req.body);
 
-    // Recalculate overall rating
     if (faculty.reviews.length > 0) {
       const totalSatisfaction = faculty.reviews.reduce(
         (sum, rev) => sum + (rev.satisfaction || 0),
@@ -57,9 +51,7 @@ app.post('/api/faculty/:id/reviews', async (req, res) => {
   }
 });
 
-/* ============================================================
-   🚩 FLAG / REPORT A REVIEW
-============================================================ */
+
 app.post('/api/faculty/:facultyId/reviews/:reviewId/flag', async (req, res) => {
   try {
     const faculty = await Faculty.findById(req.params.facultyId);
@@ -78,9 +70,6 @@ app.post('/api/faculty/:facultyId/reviews/:reviewId/flag', async (req, res) => {
   }
 });
 
-/* ============================================================
-   🤖 AI SUMMARIZATION ROUTE
-============================================================ */
 app.post('/api/summarize', (req, res) => {
   const { reviews } = req.body;
 
@@ -88,10 +77,9 @@ app.post('/api/summarize', (req, res) => {
     return res.json({ summary: "Not enough feedback available." });
   }
 
-  // TARGET: Root venv (one directory up from backend)
-  const pythonExecutable = path.join(__dirname, '..', 'venv', 'bin', 'python');
+  const pythonExecutable ='python3';
 
-  const python = spawn(pythonExecutable, ['summariser.py'], {
+  const python = spawn(pythonExecutable, [path.join(__dirname, 'summariser.py')], {
     cwd: __dirname,
     env: { ...process.env, PYTHONUNBUFFERED: '1' }
   });
@@ -99,7 +87,6 @@ app.post('/api/summarize', (req, res) => {
   let summary = '';
   let errorOutput = '';
 
-  // Send full review objects to Python via stdin
   python.stdin.write(JSON.stringify(reviews));
   python.stdin.end();
 
@@ -127,8 +114,5 @@ app.post('/api/summarize', (req, res) => {
   });
 });
 
-/* ============================================================
-   START SERVER
-============================================================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
