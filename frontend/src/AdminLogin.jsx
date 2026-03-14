@@ -1,100 +1,237 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const AdminLogin = ({ onLoginSuccess, onCancel }) => {
-  const [adminId, setAdminId] = useState('');
-  const [password, setPassword] = useState('');
-  
-  // Captcha State
-  const [num1, setNum1] = useState(0);
-  const [num2, setNum2] = useState(0);
-  const [captchaInput, setCaptchaInput] = useState('');
+  const [step, setStep] = useState('email');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
-
-  const generateCaptcha = () => {
-    setNum1(Math.floor(Math.random() * 10) + 1);
-    setNum2(Math.floor(Math.random() * 10) + 1);
-    setCaptchaInput('');
+  const inputStyle = {
+    width: '100%',
+    padding: '12px',
+    border: '1px solid var(--color-border-subtle)',
+    borderRadius: '10px',
+    fontSize: '0.95rem',
+    boxSizing: 'border-box',
+    backgroundColor: 'var(--color-bg-elevated)',
+    color: 'var(--color-text-primary)',
+    outline: 'none',
+    fontFamily: 'var(--font-body)',
   };
 
-  const handleLogin = (e) => {
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '8px',
+    fontWeight: '600',
+    color: 'var(--color-text-primary)',
+    fontSize: '0.88rem',
+  };
+
+  const handleRequestOTP = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Captcha Validation
-    if (parseInt(captchaInput) !== (num1 + num2)) {
-      setError('Incorrect Captcha. Please try again.');
-      generateCaptcha();
+    if (!email.trim()) {
+      setError('Please enter your email address.');
       return;
     }
 
-    // Basic Credential Validation (Mocked for frontend)
-    if (adminId.trim() === '' || password.trim() === '') {
-      setError('Please enter both Admin ID and Password.');
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Request failed.');
+        return;
+      }
+
+      setStep('otp');
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!otp.trim()) {
+      setError('Please enter the OTP.');
       return;
     }
 
-    // Pass the authenticated ID back to App.jsx
-    onLoginSuccess(adminId);
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Verification failed.');
+        return;
+      }
+
+      onLoginSuccess(data.token, data.adminEmail);
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-      <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '400px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-        <div style={{ backgroundColor: '#0056b3', padding: '25px 20px', textAlign: 'center', color: '#fff' }}>
-          <h2 style={{ margin: '0 0 5px 0', fontSize: '1.4rem' }}>Admin Portal Access</h2>
-          <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>Authorized Personnel Only</p>
+      <div style={{
+        backgroundColor: 'var(--color-bg-card)',
+        width: '100%',
+        maxWidth: '400px',
+        borderRadius: '10px',
+        border: '1px solid var(--color-border)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          backgroundColor: 'var(--color-bg-header)',
+          padding: '25px 20px',
+          textAlign: 'center',
+          color: 'var(--color-text-on-header)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          <h2 style={{ margin: '0 0 5px 0', fontSize: '1.4rem', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
+            Admin Portal Access
+          </h2>
+          <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.6 }}>Authorized Personnel Only</p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ padding: '30px 25px' }}>
-          {error && <div style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '6px', marginBottom: '20px', fontSize: '0.85rem', textAlign: 'center', border: '1px solid #ef9a9a' }}>{error}</div>}
+        {step === 'email' ? (
+          <form onSubmit={handleRequestOTP} style={{ padding: '30px 25px' }}>
+            {error && (
+              <div style={{
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                color: '#dc3545',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                fontSize: '0.85rem',
+                textAlign: 'center',
+                border: '1px solid rgba(220, 53, 69, 0.3)',
+              }}>
+                {error}
+              </div>
+            )}
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333', fontSize: '0.9rem' }}>Admin ID</label>
-            <input 
-              type="text" value={adminId} onChange={(e) => setAdminId(e.target.value)}
-              style={{ width: '100%', padding: '12px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '1rem', boxSizing: 'border-box' }} 
-              placeholder="e.g., ADM-101" required
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333', fontSize: '0.9rem' }}>Password</label>
-            <input 
-              type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '1rem', boxSizing: 'border-box' }} 
-              placeholder="••••••••" required
-            />
-          </div>
-
-          <div style={{ marginBottom: '25px', backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef' }}>
-            <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333', fontSize: '0.9rem' }}>
-              Security Check: {num1} + {num2} = ?
-            </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <input 
-                type="number" value={captchaInput} onChange={(e) => setCaptchaInput(e.target.value)}
-                style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '1rem' }} 
-                placeholder="Answer" required
+            <div style={{ marginBottom: '24px' }}>
+              <label style={labelStyle}>Your Authorized Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={inputStyle}
+                placeholder="you@example.com"
+                required
+                autoFocus
               />
-              <button type="button" onClick={generateCaptcha} style={{ padding: '0 15px', backgroundColor: '#e0e0e0', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', color: '#555' }}>
-                ↻
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                The administrator will receive an OTP to approve your request.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="admin-btn admin-btn-secondary"
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="admin-btn admin-btn-primary"
+                style={{ flex: 2 }}
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Request Access'}
               </button>
             </div>
-          </div>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOTP} style={{ padding: '30px 25px' }}>
+            {error && (
+              <div style={{
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                color: '#dc3545',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                fontSize: '0.85rem',
+                textAlign: 'center',
+                border: '1px solid rgba(220, 53, 69, 0.3)',
+              }}>
+                {error}
+              </div>
+            )}
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="button" onClick={onCancel} style={{ flex: 1, padding: '14px', backgroundColor: '#f1f3f5', color: '#333', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
-              Cancel
-            </button>
-            <button type="submit" style={{ flex: 2, padding: '14px', backgroundColor: '#0056b3', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
-              Secure Login
-            </button>
-          </div>
-        </form>
+            <div style={{
+              backgroundColor: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border-subtle)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginBottom: '24px',
+              fontSize: '0.82rem',
+              color: 'var(--color-text-muted)',
+              lineHeight: '1.5',
+            }}>
+              OTP sent to the administrator for <strong style={{ color: 'var(--color-text-primary)' }}>{email}</strong>.
+              Contact the administrator and enter the code they provide.
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={labelStyle}>Enter OTP</label>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                style={{ ...inputStyle, textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4em', fontWeight: '700' }}
+                placeholder="000000"
+                maxLength={6}
+                autoFocus
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => { setStep('email'); setOtp(''); setError(''); }}
+                className="admin-btn admin-btn-secondary"
+                style={{ flex: 1 }}
+              >
+                ← Back
+              </button>
+              <button
+                type="submit"
+                className="admin-btn admin-btn-primary"
+                style={{ flex: 2 }}
+                disabled={loading}
+              >
+                {loading ? 'Verifying...' : 'Verify & Login'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

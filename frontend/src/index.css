@@ -60,6 +60,16 @@
   --stitch-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease !important;
+}
+
 *,
 *::before,
 *::after {
@@ -77,7 +87,6 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -105,7 +114,6 @@ textarea {
 }
 
 @keyframes status-pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -146,7 +154,7 @@ textarea {
   color: var(--color-text-primary);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  border-radius: 4px;
+  border-radius: 10px;
   text-align: center;
   font-family: var(--font-body);
   outline: none;
@@ -167,4 +175,38 @@ textarea {
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.4;
+}
+
+.admin-btn {
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  outline: none;
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+}
+
+.admin-btn-primary {
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-page);
+  border: 1px solid var(--color-text-primary);
+}
+
+.admin-btn-primary:hover {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+}
+
+.admin-btn-secondary {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.admin-btn-secondary:hover {
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-card);
 }

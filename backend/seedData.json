@@ -2992,7 +2992,7 @@
   {
     "name": "Dr. RAMASWAMI S",
     "designation": "Sr. Asst. Professor",
-    "department": "",
+    "department": "General",
     "email": "ramaswami@mech.sastra.edu",
     "qualifications": "Ph.D., Clemson University, Clemson, SC, USA, January 2012\rM.S., Clemson University, Clemson, SC, USA, December 2005\rB. Tech., Indian Institute of Technology Madras, August 2003",
     "areasOfInterest": "Fluid mechanics, Polymer blending, Instrument design, Material modeling",
@@ -3834,8 +3834,8 @@
     "designation": "Asst. Professor - III",
     "department": "General",
     "email": "raniparvathy@scbt.sastra.edu",
-    "qualifications": "Not provided",
-    "areasOfInterest": "Not provided",
+    "qualifications": "PhD: Chemistry",
+    "areasOfInterest": "Protein-ligand interaction, structure-activity relation studies of biological macromolecules, research and methodology for mass education and skill training",
     "school": "School of Chemical & Biotechnology",
     "imageUrl": "https://sastra.edu/staffprofiles/upload/blank.jpg"
   },

@@ -18,6 +18,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDept, setActiveDept] = useState('All');
   const [adminUser, setAdminUser] = useState(null);
+  const [adminToken, setAdminToken] = useState(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -29,7 +30,11 @@ function App() {
     localStorage.setItem('lectura-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(t => (t === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => {
+    document.documentElement.classList.add('theme-transitioning');
+    setTheme(t => (t === 'light' ? 'dark' : 'light'));
+    setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 400);
+  };
 
   const fetchFaculties = async () => {
     try {
@@ -65,7 +70,10 @@ function App() {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/faculty/${viewingFaculty._id}/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({ ...reviewData, adminId: adminUser })
       });
 
@@ -194,7 +202,7 @@ function App() {
 
           {adminUser && (
             <button
-              onClick={() => { setAdminUser(null); setCurrentView('home'); }}
+              onClick={() => { setAdminUser(null); setAdminToken(null); setCurrentView('home'); }}
               style={{ padding: '6px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: '600', letterSpacing: '0.01em' }}
             >
               Exit Admin
@@ -207,7 +215,7 @@ function App() {
 
         {currentView === 'admin-login' && (
           <AdminLogin
-            onLoginSuccess={(id) => { setAdminUser(id); setCurrentView('home'); }}
+            onLoginSuccess={(token, email) => { setAdminToken(token); setAdminUser(email); setCurrentView('home'); }}
             onCancel={() => setCurrentView('home')}
           />
         )}
