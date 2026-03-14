@@ -6,6 +6,7 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [slowWarning, setSlowWarning] = useState(false);
 
   const inputStyle = {
     width: '100%',
@@ -38,6 +39,8 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
     }
 
     setLoading(true);
+    setSlowWarning(false);
+    const slowTimer = setTimeout(() => setSlowWarning(true), 8000);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/request-otp`, {
         method: 'POST',
@@ -56,6 +59,8 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
     } catch {
       setError('Could not reach the server. Please try again.');
     } finally {
+      clearTimeout(slowTimer);
+      setSlowWarning(false);
       setLoading(false);
     }
   };
@@ -129,6 +134,21 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
                 border: '1px solid rgba(220, 53, 69, 0.3)',
               }}>
                 {error}
+              </div>
+            )}
+
+            {slowWarning && (
+              <div style={{
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                color: '#856404',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                fontSize: '0.82rem',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+              }}>
+                Server is waking up, please wait a moment...
               </div>
             )}
 
