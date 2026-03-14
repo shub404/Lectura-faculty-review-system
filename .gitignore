@@ -1,0 +1,18 @@
+# Node
+node_modules/
+backend/node_modules/
+
+# Env
+.env
+.env.local
+
+# Python
+venv/
+backend/venv/
+__pycache__/
+
+# Logs
+*.log
+
+# Build
+dist/
