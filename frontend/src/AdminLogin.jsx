@@ -41,11 +41,14 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
     setLoading(true);
     setSlowWarning(false);
     const slowTimer = setTimeout(() => setSlowWarning(true), 8000);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
+        signal: controller.signal,
       });
 
       const data = await res.json();
@@ -56,10 +59,15 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
       }
 
       setStep('otp');
-    } catch {
-      setError('Could not reach the server. Please try again.');
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Server may be starting up — please try again.');
+      } else {
+        setError('Could not reach the server. Please try again.');
+      }
     } finally {
       clearTimeout(slowTimer);
+      clearTimeout(timeoutId);
       setSlowWarning(false);
       setLoading(false);
     }
