@@ -1,20 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
-
 :root {
-  --stitch-primary: #10b77f;
-  --stitch-primary-light: rgba(16, 183, 127, 0.1);
-  --stitch-background: #f6f8f7;
-  --stitch-navy: #1e293b;
-  --stitch-text-main: #0f172a;
-  --stitch-text-muted: #64748b;
-  --stitch-border: #e2e8f0;
-  --stitch-white: #ffffff;
-  --stitch-radius-lg: 1rem;
-  --stitch-radius-xl: 1.5rem;
-  --stitch-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+
+  --color-bg-page: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #fafafa;
+  --color-bg-header: #000000;
+
+  --color-text-on-header: rgba(255, 255, 255, 0.92);
+  --color-text-on-header-muted: rgba(255, 255, 255, 0.42);
+
+  --color-text-primary: #000000;
+  --color-text-secondary: #1a1a1a;
+  --color-text-muted: #555555;
+
+  --color-border: #000000;
+  --color-border-subtle: #d0d0d0;
+
+  --color-shadow-sm: none;
+  --color-shadow-md: 0 1px 0 0 rgba(0, 0, 0, 0.08);
+  --color-shadow-lg: 2px 2px 0 0 #000000;
+
+  --stitch-primary: #000000;
+  --stitch-primary-light: rgba(0, 0, 0, 0.06);
+  --stitch-background: var(--color-bg-page);
+  --stitch-navy: var(--color-text-primary);
+  --stitch-text-main: var(--color-text-primary);
+  --stitch-text-muted: var(--color-text-muted);
+  --stitch-border: var(--color-border-subtle);
+  --stitch-white: var(--color-bg-card);
+  --stitch-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+  --stitch-radius-lg: 4px;
+  --stitch-radius-xl: 4px;
 }
 
-* {
+.dark {
+  --color-bg-page: #121212;
+  --color-bg-card: #1e1e1e;
+  --color-bg-elevated: #252525;
+  --color-bg-header: #0a0a0a;
+
+  --color-text-on-header: rgba(255, 255, 255, 0.9);
+  --color-text-on-header-muted: rgba(255, 255, 255, 0.38);
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0e0;
+  --color-text-muted: #888888;
+
+  --color-border: #d8d8d8;
+  --color-border-subtle: #2d2d2d;
+
+  --color-shadow-sm: none;
+  --color-shadow-md: 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  --color-shadow-lg: none;
+
+  --stitch-primary: #ffffff;
+  --stitch-primary-light: rgba(255, 255, 255, 0.06);
+  --stitch-border: var(--color-border-subtle);
+  --stitch-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -22,13 +70,14 @@
 
 html,
 body {
-  font-family: 'Lexend', sans-serif;
-  background-color: var(--stitch-background);
-  color: var(--stitch-text-main);
+  font-family: var(--font-body);
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
   width: 100%;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -38,9 +87,81 @@ body {
   flex-direction: column;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
 button,
 input,
 select,
 textarea {
-  font-family: inherit;
+  font-family: var(--font-body);
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(0.65);
+  }
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-text-on-header);
+  animation: status-pulse 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.status-dot--offline {
+  background-color: #dc3545;
+  animation: none;
+}
+
+.school-card {
+  width: 100%;
+  padding: 36px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border-radius: 4px;
+  text-align: center;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.school-card:hover {
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-card);
+}
+
+.school-card:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 3px;
+}
+
+.school-card-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
 }
