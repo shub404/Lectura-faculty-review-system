@@ -1,23 +1,12 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const jwt = require('jsonwebtoken');
 const OTPRequest = require('../models/OTPRequest');
 
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  family: 4,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  connectionTimeout: 10000,
-  socketTimeout: 15000,
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 router.post('/request-otp', async (req, res) => {
   try {
@@ -38,8 +27,8 @@ router.post('/request-otp', async (req, res) => {
       expiresAt,
     });
 
-    await transporter.sendMail({
-      from: `"Lectura Portal" <${process.env.SMTP_USER}>`,
+    await resend.emails.send({
+      from: 'Lectura Portal <onboarding@resend.dev>',
       to: process.env.OWNER_EMAIL,
       subject: `Admin Access Request — ${email}`,
       html: `
