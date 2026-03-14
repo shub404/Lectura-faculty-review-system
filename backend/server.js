@@ -5,28 +5,35 @@ const dotenv = require('dotenv');
 const { spawn } = require('child_process');
 const path = require('path');
 const Faculty = require('./models/Faculty');
-
+const PORT = process.env.PORT || 5000;
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
+// Connect to MongoDB and start server only after connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
 
-
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ MongoDB Connection Error:', err);
+    process.exit(1);
+  });
 app.get('/api/faculty', async (req, res) => {
   try {
     const faculties = await Faculty.find().sort({ order: 1 });
     res.json(faculties);
   } catch (err) {
+    console.error('❌ Fetch Error:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post('/api/faculty/:id/reviews', async (req, res) => {
   try {
     const faculty = await Faculty.findById(req.params.id);
@@ -77,7 +84,7 @@ app.post('/api/summarize', (req, res) => {
     return res.json({ summary: "Not enough feedback available." });
   }
 
-  const pythonExecutable ='python';
+  const pythonExecutable = 'python';
 
   const python = spawn(pythonExecutable, [path.join(__dirname, 'summariser.py')], {
     cwd: __dirname,
@@ -106,16 +113,13 @@ app.post('/api/summarize', (req, res) => {
   });
 
   python.on('close', (code) => {
-  if (code !== 0) {
-    console.error('❌ Python Exit Code:', code);
-    console.error('❌ Python Error:', errorOutput);
-    return res.status(500).json({ error: 'Summarization failed' });
-  }
+    if (code !== 0) {
+      console.error('❌ Python Exit Code:', code);
+      console.error('❌ Python Error:', errorOutput);
+      return res.status(500).json({ error: 'Summarization failed' });
+    }
 
-  console.log("✅ AI Summary:", summary);
-  res.json({ summary: summary.trim() });
+    console.log("✅ AI Summary:", summary);
+    res.json({ summary: summary.trim() });
+  });
 });
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
