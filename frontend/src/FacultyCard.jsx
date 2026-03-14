@@ -42,8 +42,8 @@ const FacultyCard = ({ faculty, onClick }) => {
           <div style={{
             padding: '4px 10px',
             borderRadius: '12px',
-            backgroundColor: hasRating ? 'var(--stitch-primary-light)' : '#f1f5f9',
-            color: hasRating ? 'var(--stitch-primary)' : '#64748b',
+            backgroundColor: 'var(--stitch-primary-light)',
+            color: hasRating ? 'var(--stitch-primary)' : 'var(--color-text-muted)',
             fontSize: '0.75rem',
             fontWeight: 'bold'
           }}>

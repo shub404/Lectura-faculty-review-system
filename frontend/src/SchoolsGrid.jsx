@@ -7,7 +7,7 @@ import {
   Briefcase,
   BookOpen,
   Microscope,
-  Activity,
+
   Scale,
   Users,
   Monitor,
@@ -23,7 +23,7 @@ const schools = [
   { name: 'School of Management', Icon: Briefcase },
   { name: 'School of Arts, Science and Humanities', Icon: BookOpen },
   { name: 'CeNTAB', Icon: Microscope },
-  { name: 'CARISM', Icon: Activity },
+
   { name: 'School of Law', Icon: Scale },
   { name: 'Corporate Relations / Training & Placement', Icon: Users },
   { name: 'Distance Education', Icon: Monitor },
@@ -35,7 +35,7 @@ const SchoolsGrid = ({ onSelectSchool }) => {
     <div style={{
       width: '100%',
       backgroundColor: 'var(--color-bg-page)',
-      padding: '40px 0',
+      padding: '0px 20px 30px 20px',
     }}>
       <div style={{
         marginBottom: '36px',
