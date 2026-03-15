@@ -3,28 +3,65 @@ const crypto = require('crypto');
 const { Resend } = require('resend');
 const jwt = require('jsonwebtoken');
 const OTPRequest = require('../models/OTPRequest');
+const AdminSession = require('../models/AdminSession');
 
 const router = express.Router();
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const SESSION_DURATION_MS = 30 * 60 * 1000;
+
+const WHITELIST = (process.env.ADMIN_WHITELIST || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
+
+function signToken(email, expiresIn) {
+  return jwt.sign({ adminEmail: email }, process.env.JWT_SECRET, { expiresIn });
+}
+
+async function createSession(email) {
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  await AdminSession.findOneAndUpdate(
+    { email },
+    { email, expiresAt, createdAt: new Date() },
+    { upsert: true, new: true }
+  );
+}
+
+// ─── POST /api/auth/request-otp ─────────────────────────────────────────────
 router.post('/request-otp', async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required.' });
+    const normalized = email.trim().toLowerCase();
+
+    // 1. Whitelisted — always instant, no session tracking needed, long-lived token
+    if (WHITELIST.includes(normalized)) {
+      const token = signToken(normalized, '24h');
+      return res.json({ token, adminEmail: normalized, whitelisted: true });
     }
 
-    await OTPRequest.deleteMany({ email: email.trim().toLowerCase() });
+    // 2. Active OTP session — skip OTP, token expires with existing session
+    const activeSession = await AdminSession.findOne({
+      email: normalized,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (activeSession) {
+      const secondsLeft = Math.max(1, Math.floor((activeSession.expiresAt - Date.now()) / 1000));
+      const token = signToken(normalized, secondsLeft);
+      return res.json({ token, adminEmail: normalized, sessionActive: true });
+    }
+
+    // 3. Unknown user — send OTP to admin for approval
+    await OTPRequest.deleteMany({ email: normalized });
 
     const otp = String(crypto.randomInt(100000, 999999));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
     await OTPRequest.create({
-      email: email.trim().toLowerCase(),
+      email: normalized,
       otp,
-      expiresAt,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
     await resend.emails.send({
@@ -61,16 +98,16 @@ router.post('/request-otp', async (req, res) => {
   }
 });
 
+// ─── POST /api/auth/verify-otp ──────────────────────────────────────────────
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required.' });
 
-    if (!email || !otp) {
-      return res.status(400).json({ error: 'Email and OTP are required.' });
-    }
+    const normalized = email.trim().toLowerCase();
 
     const record = await OTPRequest.findOne({
-      email: email.trim().toLowerCase(),
+      email: normalized,
       used: false,
       expiresAt: { $gt: new Date() },
     });
@@ -86,13 +123,11 @@ router.post('/verify-otp', async (req, res) => {
     record.used = true;
     await record.save();
 
-    const token = jwt.sign(
-      { adminEmail: email.trim().toLowerCase() },
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
-    );
+    // Create 30-min session — re-login within this window skips OTP
+    await createSession(normalized);
+    const token = signToken(normalized, '30m');
 
-    res.json({ token, adminEmail: email.trim().toLowerCase() });
+    res.json({ token, adminEmail: normalized });
   } catch (err) {
     console.error('❌ OTP Verify Error:', err.message);
     res.status(500).json({ error: 'Verification failed. Please try again.' });

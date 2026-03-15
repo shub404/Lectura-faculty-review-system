@@ -17,7 +17,7 @@ const AdminDashboard = ({ adminUser, onLogout }) => {
 
   useEffect(() => {
     if (selectedSchool) {
-      fetch(`http://localhost:5000/api/faculty?school=${encodeURIComponent(selectedSchool)}`)
+      fetch(`${import.meta.env.VITE_API_URL}/api/faculty?school=${encodeURIComponent(selectedSchool)}`)
         .then(res => res.json())
         .then(data => setFacultyList(data))
         .catch(err => console.error("Failed to fetch faculty:", err));
@@ -29,7 +29,7 @@ const AdminDashboard = ({ adminUser, onLogout }) => {
     setSubmitStatus('Submitting...');
 
     try {
-      const response = await fetch(`http://localhost:5000/api/faculty/${selectedFaculty._id}/reviews`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/faculty/${selectedFaculty._id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,4 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+const STORAGE_KEY = 'lectura-admin-emails';
+
+function getSavedEmails() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveEmail(email) {
+  const existing = getSavedEmails();
+  const updated = [email, ...existing.filter(e => e !== email)].slice(0, 5);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+}
 
 const AdminLogin = ({ onLoginSuccess, onCancel }) => {
   const [step, setStep] = useState('email');
@@ -7,6 +20,21 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [slowWarning, setSlowWarning] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const resendTimerRef = useRef(null);
+  const savedEmails = getSavedEmails();
+
+  useEffect(() => () => clearInterval(resendTimerRef.current), []);
+
+  function startResendCooldown() {
+    setResendCooldown(60);
+    resendTimerRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(resendTimerRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  }
 
   const inputStyle = {
     width: '100%',
@@ -58,6 +86,14 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
         return;
       }
 
+      // Whitelisted or active session — token returned immediately
+      if (data.token) {
+        saveEmail(email.trim().toLowerCase());
+        onLoginSuccess(data.token, data.adminEmail, !!data.whitelisted);
+        return;
+      }
+
+      startResendCooldown();
       setStep('otp');
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -69,6 +105,26 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
       clearTimeout(slowTimer);
       clearTimeout(timeoutId);
       setSlowWarning(false);
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Failed to resend.'); return; }
+      startResendCooldown();
+    } catch {
+      setError('Could not reach the server.');
+    } finally {
       setLoading(false);
     }
   };
@@ -97,6 +153,7 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
         return;
       }
 
+      saveEmail(email.trim().toLowerCase());
       onLoginSuccess(data.token, data.adminEmail);
     } catch {
       setError('Could not reach the server. Please try again.');
@@ -161,18 +218,24 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
             )}
 
             <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>Your Authorized Email</label>
+              <label style={labelStyle}>Your Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={inputStyle}
                 placeholder="you@example.com"
+                list="admin-email-suggestions"
                 required
                 autoFocus
               />
+              {savedEmails.length > 0 && (
+                <datalist id="admin-email-suggestions">
+                  {savedEmails.map(e => <option key={e} value={e} />)}
+                </datalist>
+              )}
               <p style={{ margin: '8px 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                The administrator will receive an OTP to approve your request.
+                Whitelisted emails log in instantly. Others require OTP approval from the administrator.
               </p>
             </div>
 
@@ -226,7 +289,7 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
               Contact the administrator and enter the code they provide.
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>Enter OTP</label>
               <input
                 type="text"
@@ -240,10 +303,29 @@ const AdminLogin = ({ onLoginSuccess, onCancel }) => {
               />
             </div>
 
+            <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={handleResendOTP}
+                disabled={resendCooldown > 0 || loading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: resendCooldown > 0 ? 'default' : 'pointer',
+                  fontSize: '0.78rem',
+                  color: resendCooldown > 0 ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                  textDecoration: resendCooldown > 0 ? 'none' : 'underline',
+                  padding: 0,
+                }}
+              >
+                {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+              </button>
+            </div>
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button"
-                onClick={() => { setStep('email'); setOtp(''); setError(''); }}
+                onClick={() => { setStep('email'); setOtp(''); setError(''); clearInterval(resendTimerRef.current); setResendCooldown(0); }}
                 className="admin-btn admin-btn-secondary"
                 style={{ flex: 1 }}
               >

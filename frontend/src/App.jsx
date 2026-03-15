@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import SchoolsGrid from './SchoolsGrid';
 import FacultyCard from './FacultyCard';
@@ -19,6 +19,23 @@ function App() {
   const [activeDept, setActiveDept] = useState('All');
   const [adminUser, setAdminUser] = useState(null);
   const [adminToken, setAdminToken] = useState(null);
+  const [isWhitelisted, setIsWhitelisted] = useState(false);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
+  const sessionTimerRef = useRef(null);
+
+  function getTokenExpiry(token) {
+    try {
+      return JSON.parse(atob(token.split('.')[1])).exp;
+    } catch { return null; }
+  }
+
+  function formatCountdown(secs) {
+    if (secs <= 0) return '00:00:00';
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+  }
 
   useEffect(() => {
     const root = document.documentElement;
@@ -51,6 +68,27 @@ function App() {
   useEffect(() => {
     fetchFaculties();
   }, []);
+
+  // Session countdown tied to JWT expiry
+  useEffect(() => {
+    clearInterval(sessionTimerRef.current);
+    if (!adminToken) { setSessionTimeLeft(null); return; }
+    const exp = getTokenExpiry(adminToken);
+    if (!exp) return;
+    const tick = () => {
+      const remaining = Math.floor((exp * 1000 - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setAdminUser(null); setAdminToken(null);
+        setCurrentView('home'); setSessionTimeLeft(null);
+        clearInterval(sessionTimerRef.current);
+      } else {
+        setSessionTimeLeft(remaining);
+      }
+    };
+    tick();
+    sessionTimerRef.current = setInterval(tick, 1000);
+    return () => clearInterval(sessionTimerRef.current);
+  }, [adminToken]);
 
   const filteredFaculties = faculties
     .filter(f => f.school === selectedSchool)
@@ -113,7 +151,7 @@ function App() {
         boxSizing: 'border-box',
         position: 'sticky',
         top: 0,
-        zIndex: 50
+        zIndex: 50,
       }}>
         <div
           onClick={() => { setCurrentView('home'); setSearchTerm(''); setActiveDept('All'); setViewingFaculty(null); }}
@@ -162,6 +200,32 @@ function App() {
           </div>
         </div>
 
+        {adminUser && (
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1px',
+            pointerEvents: 'none',
+          }}>
+            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600' }}>
+              {isWhitelisted ? 'Access Level' : 'Session Expires In'}
+            </span>
+            <span style={{
+              fontSize: '0.95rem',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: '700',
+              letterSpacing: '0.08em',
+              color: (!isWhitelisted && sessionTimeLeft < 300) ? '#ff6b6b' : 'rgba(255,255,255,0.9)',
+            }}>
+              {isWhitelisted ? 'Unlimited — Whitelisted' : (sessionTimeLeft !== null ? formatCountdown(sessionTimeLeft) : '--:--:--')}
+            </span>
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
           <div style={{
             fontSize: '0.7rem',
@@ -202,7 +266,7 @@ function App() {
 
           {adminUser && (
             <button
-              onClick={() => { setAdminUser(null); setAdminToken(null); setCurrentView('home'); }}
+              onClick={() => { setAdminUser(null); setAdminToken(null); setIsWhitelisted(false); setCurrentView('home'); }}
               style={{ padding: '6px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: '600', letterSpacing: '0.01em' }}
             >
               Exit Admin
@@ -215,7 +279,7 @@ function App() {
 
         {currentView === 'admin-login' && (
           <AdminLogin
-            onLoginSuccess={(token, email) => { setAdminToken(token); setAdminUser(email); setCurrentView('home'); }}
+            onLoginSuccess={(token, email, whitelisted) => { setAdminToken(token); setAdminUser(email); setIsWhitelisted(!!whitelisted); setCurrentView('home'); }}
             onCancel={() => setCurrentView('home')}
           />
         )}
