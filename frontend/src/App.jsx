@@ -372,7 +372,7 @@ function App() {
         borderTop: '1px solid rgba(255,255,255,0.08)',
       }}>
         <p style={{ fontSize: '0.78rem', margin: '0 0 10px 0', fontWeight: '400', letterSpacing: '0.01em' }}>
-          © 2026 Lectura Project (Team Aperture). For academic use only.
+          © 2026 Lectura Project. For academic use only.
         </p>
         {!adminUser && (
           <button
