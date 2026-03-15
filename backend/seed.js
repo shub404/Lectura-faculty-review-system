@@ -31,9 +31,9 @@ const seedDatabase = async () => {
       };
 
       await Faculty.updateOne(
-        { name: sanitizedData.name },  // find faculty
-        { $set: sanitizedData },       // update fields
-        { upsert: true }               // insert if not found
+        { email: sanitizedData.email }, // email is unique — avoids name collision
+        { $set: sanitizedData },
+        { upsert: true }
       );
     }
 
