@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(python -c \"import json; data=json.load\\(open\\(''seedData.json''\\)\\); centab=[f for f in data if ''centab'' in str\\(f\\).lower\\(\\) or ''swaminathan'' in str\\(f\\).lower\\(\\)]; print\\(json.dumps\\(centab, indent=2\\)\\)\")",
-      "Bash(python -c \"import json; data=json.load\\(open\\(''seedData.json'', encoding=''utf-8''\\)\\); centab=[f for f in data if ''centab'' in str\\(f\\).lower\\(\\) or ''swaminathan'' in str\\(f\\).lower\\(\\)]; print\\(json.dumps\\(centab, indent=2\\)\\)\")"
+      "Bash(python -c \"import json; data=json.load\\(open\\(''seedData.json'', encoding=''utf-8''\\)\\); centab=[f for f in data if ''centab'' in str\\(f\\).lower\\(\\) or ''swaminathan'' in str\\(f\\).lower\\(\\)]; print\\(json.dumps\\(centab, indent=2\\)\\)\")",
+      "Bash(ls -la /c/Users/HP/OneDrive/Documents/GitHub/Lectura-faculty-review-system/backend/*.py)"
     ]
   }
 }
