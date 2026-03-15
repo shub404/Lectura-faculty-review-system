@@ -137,25 +137,75 @@ MongoDB Atlas
 ---
 
 # Project Structure
+
+```
 Lectura-faculty-review-system
 │
-├── docs
+├── docs/                          # README screenshots
+│   ├── staff-directory.png
+│   ├── faculty-list.png
+│   └── review-form.png
 │
-├── backend
-│ ├── models
-│ ├── routes
-│ ├── middleware
-│ ├── server.js
-│ ├── seed.js
-│ ├── scrap_all.py
+├── backend/
+│   ├── models/
+│   │   ├── Faculty.js
+│   │   ├── Review.js
+│   │   ├── User.js
+│   │   ├── OTPRequest.js
+│   │   └── AdminSession.js
+│   │
+│   ├── routes/
+│   │   └── auth.js
+│   │
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   │
+│   ├── scripts/
+│   │   └── extract_ids.py
+│   │
+│   ├── server.js
+│   ├── seed.js
+│   ├── seedData.js
+│   ├── seedData.json
+│   ├── merge_data.js
+│   ├── updateImages.js
+│   ├── scrap_all.py
+│   ├── summariser.py
+│   └── package.json
 │
-└── frontend
-├── src
-│ ├── App.jsx
-│ ├── SchoolsGrid.jsx
-│ ├── FacultyCard.jsx
-│ ├── FacultyProfilePage.jsx
-│ └── ReviewModal.jsx
+├── frontend/
+│   ├── public/
+│   │   └── lectura.png
+│   │
+│   ├── src/
+│   │   ├── assets/
+│   │   │   └── school-animated-buttons.css
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── SchoolsGrid.jsx
+│   │   ├── FacultyCard.jsx
+│   │   ├── FacultyProfilePage.jsx
+│   │   ├── FacultyModal.jsx
+│   │   ├── FacultyForm.jsx
+│   │   ├── ReviewModal.jsx
+│   │   ├── AdminLogin.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── index.html
+│   ├── vite.config.js
+│   ├── eslint.config.js
+│   ├── package.json
+│   └── .env.production
+│
+├── backend/.env.example
+├── frontend/.env.example
+│
+├── README.md
+└── .gitignore
+```
 
 
 ---
