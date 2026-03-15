@@ -9,7 +9,7 @@ const FacultyForm = ({ faculties, onReviewPosted }) => {
     if (!selectedId) return alert("Select a faculty member first!");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/faculty/${selectedId}/review`, {
+      const response = await fetch(`http://localhost:5000/api/faculty/${selectedId}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(review),
